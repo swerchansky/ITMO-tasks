@@ -15,11 +15,19 @@ module alu(srca, srcb, alucontrol, aluresult, zero);
       3'b110: 
         aluresult = srca - srcb;
       3'b111: begin 
-        if (srca < srcb) begin
-          aluresult = 1;
-        end else begin
-          aluresult = 0;
-        end
+        if (srca[31] == srcb[31]) begin 
+                if (srca < srcb) begin
+                    aluresult = 32'b1;
+                end else begin
+                    aluresult = 32'b0;
+                end
+            end else begin
+                if (srca[31] > srcb[31]) begin
+                    aluresult = 32'b1;
+                end else begin
+                    aluresult = 32'b0;
+                end    
+            end
       end
     endcase
   end

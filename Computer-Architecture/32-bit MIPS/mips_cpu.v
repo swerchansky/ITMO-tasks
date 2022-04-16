@@ -7,23 +7,20 @@ module mips_cpu(clk, instruction_memory_a, instruction_memory_rd, data_memory_a,
   
   input clk;
   output data_memory_we;
-  output reg [31:0] instruction_memory_a, data_memory_a, data_memory_wd;
+  output [31:0] instruction_memory_a, data_memory_a, data_memory_wd;
   inout [31:0] instruction_memory_rd, data_memory_rd;
   
   output register_we3;
-  output reg [4:0] register_a1, register_a2, register_a3;
-  output reg [31:0] register_wd3;
+  output [4:0] register_a1, register_a2, register_a3;
+  output [31:0] register_wd3;
   inout [31:0] register_rd1, register_rd2;
   
   output memtoreg, memwrite, branch, alusrc, regdst, regwrite, zero;
   inout [2:0] alucontrol;
   
-  output [31:0] signimm, srcb1;
-  output [31:0] shlout;
-  output reg [31:0] PC, PCtmp, PCPlus4, PCBranch, result;
-  output reg PCSrc;
-  output reg [31:0] alures;
-  output reg [31:0] rdinst;
+  output [31:0] signimm, srcb1, shlout, PCtmp, PCPlus4, PCBranch, result, alures;
+  reg [31:0] PC;
+  output PCSrc;
   
   initial begin
     PC = 0;
@@ -38,20 +35,18 @@ module mips_cpu(clk, instruction_memory_a, instruction_memory_rd, data_memory_a,
     assign  register_a2 = instruction_memory_rd[20:16];
 
 
-    sign_extend ext(instruction_memory_rd[15:0], signimm);
+  sign_extend extending(instruction_memory_rd[15:0], signimm);
 
 
-    mux2_32 mux_alu(register_rd2, signimm, alusrc, srcb1);
+    mux2_32 alumux(register_rd2, signimm, alusrc, srcb1);
 
 
-    alu al(register_rd1, srcb1, alucontrol, alures, zero);
-
+    alu res(register_rd1, srcb1, alucontrol, alures, zero);
 
     assign data_memory_wd = register_rd2;
     assign data_memory_a = alures;
 
-
-    mux2_32 muxdatamem(alures, data_memory_rd, memtoreg, result);
+    mux2_32 datamemory(alures, data_memory_rd, memtoreg, result);
 
 
     assign register_wd3 = result;
@@ -59,9 +54,9 @@ module mips_cpu(clk, instruction_memory_a, instruction_memory_rd, data_memory_a,
 
     mux2_5 mux_a3(instruction_memory_rd[20:16], instruction_memory_rd[15:11], regdst, register_a3);
   
-  assign shlout = signimm;
+  shl_2 extend_sign(signimm, shlout);
 
-  adder add4(PC, 32'b00000000000000000000000000000001, PCPlus4);
+  adder add4(PC, 4, PCPlus4);
 
     adder addBranch(shlout, PCPlus4, PCBranch);
 
@@ -69,7 +64,7 @@ module mips_cpu(clk, instruction_memory_a, instruction_memory_rd, data_memory_a,
     assign PCSrc = zero & branch;
 
 
-    mux2_32 muxPC(PCPlus4, PCBranch, PCSrc, PCtmp);
+  mux2_32 Pc_extend(PCPlus4, PCBranch, PCSrc, PCtmp);
 
    
   always @(posedge clk) begin
