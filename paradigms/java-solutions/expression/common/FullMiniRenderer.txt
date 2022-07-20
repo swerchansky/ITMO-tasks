@@ -1,0 +1,32 @@
+    private static final class Priority {
+        private static final Priority MAX = new Priority(Integer.MAX_VALUE, true);
+
+        private final int priority;
+        private final int level;
+        private final boolean associative;
+        private final boolean special;
+        private final boolean safe;
+        private final int abs;
+
+        public Priority(final int priority, final boolean safe) {
+            this.priority = priority;
+            abs = Math.abs(priority);
+            level = Math.abs(priority / 2);
+            associative = priority > 0;
+            special = (priority & 1) == 1;
+            this.safe = safe;
+        }
+
+        private boolean left(final Priority l) {
+            return l.abs < level;
+        }
+
+        private boolean right(final Priority r) {
+            // :NOTE: Especially ugly bit-fiddling, do not replicate
+            return r.level < level || r.level == level && (
+                    safe && (!r.associative || special)
+                            || !associative
+                            || special && !r.special
+            );
+        }
+    }
